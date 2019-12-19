@@ -1,0 +1,57 @@
+apiVersion: skaffold/v1
+kind: Config
+.project: &project_id GCP_PROJECT_ID
+.imageAnchor: &image_anchor "gcr.io/GCP_PROJECT_ID/backend"
+build:
+  googleCloudBuild: 
+    projectId: *project_id
+  artifacts:
+    - image: *image_anchor
+      sync: 
+        infer: ["valuesDynamic*"]
+deploy:
+  #kubeContext: cluster !! Also can be overridden for different environment
+  # to deploy to diffferent clusters
+  helm:
+    releases:
+    - name: backend-dev
+      namespace: dev
+      chartPath: ./charts/backend
+      values:
+        image: *image_anchor
+      valuesFiles:
+        - valuesDynamic.yaml
+profiles:
+- name: stage
+  deploy:
+    helm:
+      releases:
+      - name: backend-stage
+        namespace: stage
+        chartPath: ./charts/backend
+        values:
+          image: *image_anchor
+        valuesFiles:
+          - valuesDynamic.yaml
+- name: prod-canary
+  deploy:
+    helm:
+      releases:
+      - name: backend-prod-canary
+        namespace: prod
+        chartPath: ./charts/backend
+        values:
+          image: *image_anchor
+        valuesFiles:
+          - valuesDynamicCanary.yaml
+- name: prod
+  deploy:
+    helm:
+      releases:
+      - name: backend-prod
+        namespace: prod
+        chartPath: ./charts/backend
+        values:
+          image: *image_anchor
+        valuesFiles:
+          - valuesDynamicProd.yaml
